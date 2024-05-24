@@ -31,15 +31,67 @@ async function run() {
 
 
     // products api
+    // store
+  //   app.get('/product', async (req, res) => {
+  //     const page = parseInt(req.query.page);
+  //     const size = parseInt(req.query.size);
+  //     const category = req.query.category;
+  
+  //     const query = category && category !== 'All' ? { category } : {};
+  
+  //     const cursor = productsCollection.find(query).skip(page * size).limit(size);
+  //     const totalCount = await productsCollection.countDocuments(query);
+  //     console.log(page, size, category, 'backend');
+  //     const result = await cursor.toArray();
+  //     res.send({ totalCount, products: result });
+  // });
+  
+  app.get('/product', async (req, res) => {
+    const page = parseInt(req.query.page);
+    const size = parseInt(req.query.size);
+    const category = req.query.category;
+    const sort = req.query.sort;
+    const brand = req.query.brand; // New
 
-    app.get('/product', async (req, res) => {
-      // console.log(req.query);
-      const page = parseInt(req.query.page)
-      const size = parseInt(req.query.size)
-      const cursor = productsCollection.find().skip(page * size).limit(size)
-      const result = await cursor.toArray()
+    let query = category && category !== 'All' ? { category } : {};
+    const sortOrder = sort === 'asc' ? 1 : -1;
+
+    // Add brand filter if provided
+    if (brand) {
+        query = { ...query, brand };
+    }
+
+    const cursor = productsCollection.find(query).sort({ price: sortOrder }).skip(page * size).limit(size);
+    const totalCount = await productsCollection.countDocuments(query);
+    console.log(page, size, category, sort, brand, 'backend'); // Updated log
+    const result = await cursor.toArray();
+    res.send({ totalCount, products: result });
+});
+
+
+
+
+    app.get('/product/:id', async(req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id)};
+      const result = await productsCollection.findOne(query);
       res.send(result)
     })
+
+
+    // app.get('/product/:category', async (req, res) => {
+    
+    //     const category = req.params.category;
+    //     const query = { category: category };
+    //     const result = await productsCollection.find(query).toArray();
+    
+    //     res.send(result);
+      
+    // });
+
+  
+    
+
     app.get('/productCount' , async(req, res)=> {
       const count =await productsCollection.estimatedDocumentCount();
       res.send({count})
